@@ -83,18 +83,18 @@ graph TD
 ### 2. Request Flowchart
 ```mermaid
 flowchart TD
-    A([Start Request]) --> B{Valid API Key?}
-    B -- No --> C[Return 401 Unauthorized]
-    B -- Yes --> D{Is requested Model 'auto'?}
-    D -- Yes --> E[Router randomly selects a healthy Provider]
-    D -- No --> F[Match explicitly requested Provider]
-    F --> G{Is Session Valid & Logged In?}
+    A([Start Request]) --> B{"Valid API Key?"}
+    B -- No --> C["Return 401 Unauthorized"]
+    B -- Yes --> D{"Is requested Model 'auto'?"}
+    D -- Yes --> E["Router randomly selects a healthy Provider"]
+    D -- No --> F["Match explicitly requested Provider"]
+    F --> G{"Is Session Valid & Logged In?"}
     E --> G
-    G -- No --> H[Flash 'Needs Login' warning on Admin View]
-    G -- Yes --> I[Open Headless Playwright Context]
-    I --> J[Navigate to Chat UI / Wait for DOM]
-    J --> K[Inject message & Parse response chunks via SSE]
-    K --> L[Stream payload back to Client]
+    G -- No --> H["Flash 'Needs Login' warning on Admin View"]
+    G -- Yes --> I["Open Headless Playwright Context"]
+    I --> J["Navigate to Chat UI / Wait for DOM"]
+    J --> K["Inject message & Parse response chunks via SSE"]
+    K --> L["Stream payload back to Client"]
     L --> M([End Request])
 ```
 

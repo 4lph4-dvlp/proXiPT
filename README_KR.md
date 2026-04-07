@@ -84,17 +84,17 @@ graph TD
 ```mermaid
 flowchart TD
     A([요청 시작]) --> B{API 인증}
-    B -- 실패 --> C[Return 401 Unauthorized]
-    B -- 통과 --> D{요청 모델이 'auto' 인가?}
-    D -- Yes --> E[Router가 건강한(Available) 프로바이더 랜덤 픽]
-    D -- No --> F[선택한 모델의 프로바이더로 지정]
-    F --> G{사용자 세션이 유효한가?}
+    B -- 실패 --> C["Return 401 Unauthorized"]
+    B -- 통과 --> D{"요청 모델이 'auto' 인가?"}
+    D -- Yes --> E["Router가 건강한(Available) 프로바이더 랜덤 픽"]
+    D -- No --> F["선택한 모델의 프로바이더로 지정"]
+    F --> G{"사용자 세션이 유효한가?"}
     E --> G
-    G -- No --> H[Admin 대시보드 스크린에 'Needs Login' 표출]
-    G -- Yes --> I[Headless 모드로 브라우저 Context 열기]
-    I --> J[채팅 사이트 접속 및 DOM 대기]
-    J --> K[메시지 입력 및 SSE 스트림 청크 파싱]
-    K --> L[클라이언트로 실시간 전송 (Streaming)]
+    G -- No --> H["Admin 대시보드 스크린에 'Needs Login' 표출"]
+    G -- Yes --> I["Headless 모드로 브라우저 Context 열기"]
+    I --> J["채팅 사이트 접속 및 DOM 대기"]
+    J --> K["메시지 입력 및 SSE 스트림 청크 파싱"]
+    K --> L["클라이언트로 실시간 전송 (Streaming)"]
     L --> M([요청 종료])
 ```
 
