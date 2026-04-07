@@ -1,0 +1,10 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+playwright>=1.49.0
+pydantic>=2.10.0
+pydantic-settings>=2.6.0
+pyyaml>=6.0.2
+ruamel.yaml>=0.18.6
+tiktoken>=0.8.0
+httpx>=0.28.0
+sse-starlette>=2.2.0

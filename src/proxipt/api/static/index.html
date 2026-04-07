@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProxiPT - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/dashboard/css/styles.css">
+</head>
+<body>
+    <div class="background-aurora">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                <h1>ProxiPT <span>Dash</span></h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="overview">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Overview
+                </button>
+                <button class="nav-item" data-tab="settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.8.96 1.45 1h.1a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Settings
+                </button>
+                <button class="nav-item" data-tab="playground">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Playground
+                </button>
+                <button class="nav-item" data-tab="integrations">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    Integrations
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content glass-panel">
+            <header class="top-header">
+                <h2 id="page-title">Overview</h2>
+                <div class="system-stats">
+                    <div class="stat-badge">
+                        <span class="label">Uptime</span>
+                        <span class="value" id="stat-uptime">0s</span>
+                    </div>
+                    <div class="stat-badge">
+                        <span class="label">Requests</span>
+                        <span class="value" id="stat-requests">0</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="tab-container">
+                <!-- OVERVIEW TAB -->
+                <div id="tab-overview" class="tab-pane active">
+                    <div class="section-title">
+                        <h3>Active Operations</h3>
+                        <div class="status-indicator">
+                            <div class="pulse-dot green"></div> <span id="active-count">0</span> Modules Live
+                        </div>
+                    </div>
+                    <div class="provider-grid" id="overview-grid">
+                        <div class="loader-container"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS TAB -->
+                <div id="tab-settings" class="tab-pane">
+                    <div class="section-title">
+                        <h3>Provider Configuration</h3>
+                        <span style="font-size: 0.85rem; color: var(--text-muted); margin-left: 10px;">Enable or disable plugins. Changes are saved to config.yaml instantly.</span>
+                    </div>
+                    <div class="provider-grid" id="settings-grid">
+                        <div class="loader-container"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                <!-- PLAYGROUND TAB -->
+                <div id="tab-playground" class="tab-pane">
+                    <div class="playground-layout">
+                        <div class="chat-sidebar">
+                            <label>Select Model</label>
+                            <select id="chat-model-select" class="glass-input">
+                                <option value="auto">auto (Router)</option>
+                            </select>
+                            
+                            <label style="margin-top:20px;">System Prompt</label>
+                            <textarea id="chat-system-prompt" class="glass-input" rows="4">You are a helpful assistant.</textarea>
+                            
+                            <button id="chat-clear-btn" class="btn-warning" style="margin-top:20px; width:100%;">Clear Chat History</button>
+                        </div>
+                        
+                        <div class="chat-main">
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="message system-msg">
+                                    <div class="msg-avatar">ProxiPT</div>
+                                    <div class="msg-bubble">Welcome to the playground. What's on your mind?</div>
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <textarea id="chat-textarea" class="glass-input" placeholder="Type a message... (Shift+Enter for newline)"></textarea>
+                                <button id="chat-send-btn" class="btn-primary">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTEGRATIONS TAB -->
+                <div id="tab-integrations" class="tab-pane">
+                    <div class="integrations-content">
+                        <h3>Vibe-Coding Intégrations</h3>
+                        <p style="color:var(--text-muted); margin-bottom: 2rem;">Copy these settings into your favorite coding GUI tools to use ProxiPT as a local AI endpoint.</p>
+
+                        <div class="integration-card">
+                            <div class="integration-header">
+                                <img src="https://cursor.com/favicon.ico" width="24" height="24" onerror="this.src='data:image/svg+xml,<svg>...</svg>'">
+                                <h4>Cursor IDE</h4>
+                            </div>
+                            <div class="integration-body">
+                                1. Open Cursor Settings > Models.<br>
+                                2. Add a new <strong>OpenAI-compatible Base URL</strong>.<br>
+                                <div class="code-block">
+                                    <span>Base URL:</span> http://localhost:8787/v1<br>
+                                    <span>API Key:</span> (Leave empty, or use your setup_key if configured)
+                                </div>
+                                3. Add Custom Model Names (e.g., <code>auto</code>, <code>best-free</code>, <code>claude-3.5-sonnet</code>).<br>
+                                4. Toggle them on and you're good to go!
+                            </div>
+                        </div>
+                        
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>Cline / Roo Code</h4>
+                            </div>
+                            <div class="integration-body">
+                                1. Open VSCode Settings for the Extension.<br>
+                                2. Select <strong>API Provider: OpenAI Compatible</strong>.<br>
+                                <div class="code-block">
+                                    <span>Base URL:</span> http://localhost:8787/v1<br>
+                                    <span>API Key:</span> dummy (Cannot be empty in some tools)<br>
+                                    <span>Model ID:</span> auto
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="/dashboard/js/app.js"></script>
+</body>
+</html>

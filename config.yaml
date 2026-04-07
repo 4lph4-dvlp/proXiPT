@@ -1,0 +1,325 @@
+# ProxiPT Configuration
+# =====================
+# 기본값: Tier 1 제공자만 활성화.
+# 원하는 제공자의 enabled: true/false 를 변경하여 사용 여부를 제어하세요.
+
+server:
+  host: "0.0.0.0"
+  port: 8787
+  # Optional API key for authentication. Leave empty for no auth.
+  api_key: ""
+  # CORS origins (use ["*"] to allow all)
+  cors_origins: ["*"]
+
+browser:
+  headless: true
+  browser_type: "chromium"
+  slow_mo: 0
+  max_pages_per_provider: 2
+  timeout: 60000
+  sessions_dir: "./sessions"
+
+# ==========================================================================
+# Tier 1 — 기본 활성화 (가장 인기 있는 무료 서비스)
+# ==========================================================================
+
+providers:
+  deepseek:
+    enabled: true
+    base_url: "https://chat.deepseek.com"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "deepseek-chat"
+      name: "DeepSeek-V3"
+      is_default: true
+    - id: "deepseek-reasoner"
+      name: "DeepThink (R1)"
+
+  qwen:
+    enabled: false
+    base_url: "https://chat.qwen.ai"
+    requires_login: false
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "qwen-max"
+      name: "Qwen-Max"
+      is_default: true
+    - id: "qwen-plus"
+      name: "Qwen-Plus"
+    - id: "qwen-turbo"
+      name: "Qwen-Turbo"
+
+  chatgpt:
+    enabled: true
+    base_url: "https://chatgpt.com"
+    requires_login: true
+    max_concurrent: 1
+    cooldown_seconds: 10
+    models:
+    - id: "gpt-4o-mini"
+      name: "GPT-4o mini"
+      is_default: true
+    - id: "gpt-4o"
+      name: "GPT-4o"
+
+  gemini:
+    enabled: true
+    base_url: "https://gemini.google.com"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "gemini-2.0-flash"
+      name: "2.0 Flash"
+      is_default: true
+
+  aistudio:
+    enabled: true
+    base_url: "https://aistudio.google.com"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "gemini-2.0-flash-aistudio"
+      name: "Gemini 2.0 Flash"
+      is_default: true
+    - id: "gemini-2.5-pro"
+      name: "Gemini 2.5 Pro"
+
+  # ========================================================================
+  # Tier 2 — 기본 비활성화 (enabled: true 로 변경하면 사용 가능)
+  # ========================================================================
+
+  groq:
+    enabled: true
+    base_url: "https://console.groq.com/playground"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 3
+    models:
+    - id: "llama-3.3-70b"
+      name: "Llama 3.3 70B"
+      is_default: true
+    - id: "mixtral-8x7b"
+      name: "Mixtral 8x7B"
+
+  huggingchat:
+    enabled: false
+    base_url: "https://huggingface.co/chat"
+    requires_login: false
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "meta-llama-3.3-70b"
+      name: "Meta Llama 3.3 70B"
+      is_default: true
+
+  mistral:
+    enabled: false
+    base_url: "https://chat.mistral.ai"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "mistral-large"
+      name: "Mistral Large"
+      is_default: true
+
+  duckai:
+    enabled: true
+    base_url: "https://duck.ai"
+    requires_login: false
+    max_concurrent: 2
+    cooldown_seconds: 3
+    models:
+    - id: "duckai-gpt-4o-mini"
+      name: "GPT-4o mini"
+      is_default: true
+    - id: "duckai-claude-3-haiku"
+      name: "Claude 3 Haiku"
+
+  copilot:
+    enabled: false
+    base_url: "https://copilot.microsoft.com"
+    requires_login: false
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "copilot"
+      name: "Microsoft Copilot"
+      is_default: true
+
+  poe:
+    enabled: false
+    base_url: "https://poe.com"
+    requires_login: true
+    max_concurrent: 1
+    cooldown_seconds: 10
+    models:
+    - id: "poe-assistant"
+      name: "Assistant"
+      is_default: true
+
+  perplexity:
+    enabled: false
+    base_url: "https://www.perplexity.ai"
+    requires_login: false
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "perplexity"
+      name: "Perplexity"
+      is_default: true
+
+  openrouter:
+    enabled: false
+    base_url: "https://openrouter.ai/playground"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "openrouter-auto"
+      name: "Auto"
+      is_default: true
+
+  # ========================================================================
+  # Tier 3 — 기본 비활성화 (중국 서비스 및 기타)
+  # ========================================================================
+
+  kimi:
+    enabled: false
+    base_url: "https://kimi.moonshot.cn"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "kimi-chat"
+      name: "Kimi"
+      is_default: true
+
+  doubao:
+    enabled: false
+    base_url: "https://www.doubao.com/chat"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "doubao-chat"
+      name: "Doubao"
+      is_default: true
+
+  chatglm:
+    enabled: true
+    base_url: "https://chatglm.cn"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "chatglm-chat"
+      name: "ChatGLM"
+      is_default: true
+
+  yichat:
+    enabled: false
+    base_url: "https://chat.01.ai"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "yi-chat"
+      name: "Yi"
+      is_default: true
+
+  coze:
+    enabled: false
+    base_url: "https://www.coze.com"
+    requires_login: true
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "coze-chat"
+      name: "Coze"
+      is_default: true
+
+  you:
+    enabled: false
+    base_url: "https://you.com"
+    requires_login: false
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "you-chat"
+      name: "You.com"
+      is_default: true
+
+  pi:
+    enabled: false
+    base_url: "https://pi.ai/talk"
+    requires_login: false
+    max_concurrent: 1
+    cooldown_seconds: 5
+    models:
+    - id: "pi"
+      name: "Pi"
+      is_default: true
+
+  metaai:
+    enabled: false
+    base_url: "https://www.meta.ai"
+    requires_login: false
+    max_concurrent: 2
+    cooldown_seconds: 5
+    models:
+    - id: "meta-ai"
+      name: "Meta AI (Llama)"
+      is_default: true
+
+  claude:
+    enabled: true
+    base_url: "https://claude.ai"
+    requires_login: true
+    max_concurrent: 1
+    cooldown_seconds: 10
+    models:
+    - id: "claude-sonnet"
+      name: "Claude Sonnet"
+      is_default: true
+
+# ==========================================================================
+# Model routing: virtual model names that map to provider pools
+# ==========================================================================
+# 주의: routing에 포함된 provider도 위에서 enabled: true여야 실제로 사용됩니다.
+routing:
+  auto:
+    strategy: "round_robin"
+    providers: ["deepseek", "qwen", "gemini", "chatgpt", "aistudio"]
+  best-free:
+    strategy: "priority"
+    providers: ["deepseek", "chatgpt", "gemini", "qwen"]
+  all-available:
+    strategy: "round_robin"
+    providers: ["deepseek", "qwen", "gemini", "chatgpt", "aistudio", "groq", "huggingchat",
+      "mistral", "duckai", "copilot", "perplexity", "openrouter", "kimi", "doubao",
+      "chatglm", "yichat", "coze", "you", "pi", "metaai", "claude"]
+
+# ==========================================================================
+# Custom providers — CSS 셀렉터로 아무 채팅 사이트 추가 가능
+# ==========================================================================
+custom_providers: {}
+#  example:
+#    name: "Example Chatbot"
+#    base_url: "https://example.com/chat"
+#    requires_login: false
+#    selectors:
+#      input_textarea: "textarea#prompt"
+#      send_button: "button[type='submit']"
+#      response_container: "div.response"
+#      new_chat_button: "a.new-chat"
+#      loading_indicator: "div.loading"
+#    models:
+#      - id: "default"
+#        name: "Default"
+#        is_default: true
