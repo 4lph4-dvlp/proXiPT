@@ -140,54 +140,39 @@ Configure your models straight from the Web UI once the server boots.
 
 ### 3. API Invocation & Tool Integrations
 
-Your local, unlimited, OpenAI-compliant proxy endpoint is ready! Here is how to configure **11 of the most popular AI Coding Agents and IDEs** to use your local `proXiPT` server. 
+Your local, unlimited, OpenAI-compliant proxy endpoint is ready! Here is how to configure **6 of the most popular AI Coding Agents and IDEs** to use your local `proXiPT` server. 
 
 > **API Constraints Note:** 
 > - **Base URL / Endpoint:** `http://localhost:8787/v1` (For some tools, explicitly use `/v1/chat/completions`)
 > - **API Key:** `dummy` (or any arbitrary string; it is ignored by proXiPT but required by most tools)
 > - **Model Name:** `auto` (Let proXiPT load-balance) or specific models like `gpt-4o`.
 
-#### 1. Cursor IDE
+#### 1. Claude Code (Anthropic CLI)
+Claude Code only speaks the Anthropic API format. To bridge it to ProxiPT, use the `litellm` proxy:
+1. Install LiteLLM: `pip install litellm`
+2. Start the proxy: `litellm --model openai/auto --api_base http://localhost:8787/v1 --api_key dummy`
+3. Run Claude Code using the proxy port (usually 4000):
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:4000"
+export ANTHROPIC_API_KEY="dummy"
+claude
+```
+
+#### 2. ClawCode (Harness CLI)
+Since ClawCode is a clean-room rewrite of Claude Code, configure it via environment variables before launching:
+```bash
+export OPENAI_BASE_URL="http://localhost:8787/v1"
+export OPENAI_API_KEY="dummy"
+clawcode --model auto
+```
+
+#### 3. Cursor IDE
 1. Open Cursor Settings (Gear icon) -> `Models`.
 2. Toggle on the **OpenAI Base URL** and set it to: `http://localhost:8787/v1`
 3. Enter `dummy` in the **OpenAI API Key** field.
 4. Add the custom name `auto` in the model search input box beneath and click `+` to lock it in.
 
-#### 2. Cline (Roo Code) - VS Code Extension
-1. Open the Cline panel settings.
-2. Set **API Provider** to `OpenAI Compatible`.
-3. Set **Base URL** to `http://localhost:8787/v1`.
-4. Set **API Key** to `dummy` and **Model ID** to `auto`.
-
-#### 3. Continue.dev (VS Code / JetBrains)
-1. Open the Continue settings file (`config.json` via the gear icon).
-2. Add the following object to your `"models"` array:
-```json
-{
-  "title": "proXiPT",
-  "provider": "openai",
-  "model": "auto",
-  "apiKey": "dummy",
-  "apiBase": "http://localhost:8787/v1"
-}
-```
-
-#### 4. Aider (CLI Pair Programmer)
-When launching aider from your terminal, inject the custom base URL using flags:
-```bash
-aider --openai-api-base http://localhost:8787/v1 --openai-api-key dummy --model openai/auto
-```
-
-#### 5. OpenHands (formerly OpenDevin)
-In your project directory, create or edit the `.env` configuration file:
-```env
-LLM_PROVIDER="openai"
-LLM_BASE_URL="http://localhost:8787/v1"
-LLM_API_KEY="dummy"
-LLM_MODEL="openai/auto"
-```
-
-#### 6. OpenClaw (Autonomous OS Agent)
+#### 4. OpenClaw (Autonomous OS Agent)
 Configure the custom provider in `~/.openclaw/openclaw.json`:
 ```json
 "models": {
@@ -201,7 +186,7 @@ Configure the custom provider in `~/.openclaw/openclaw.json`:
 }
 ```
 
-#### 7. Zed IDE
+#### 5. Zed IDE
 Open your `settings.json` via `cmd+,` and configure the assistant language models:
 ```json
 "language_models": {
@@ -212,38 +197,13 @@ Open your `settings.json` via `cmd+,` and configure the assistant language model
 }
 ```
 
-#### 8. CodeGPT (VS Code Extension)
-1. Open VS Code Settings and search for CodeGPT.
-2. Change **Provider** to `OpenAI`.
-3. For custom endpoints, CodeGPT often requires the full path: `http://localhost:8787/v1/chat/completions`.
-4. Fill Model with `auto` and Auth Token with `dummy`.
-
-#### 9. ClawCode (Harness CLI)
-Since ClawCode is a clean-room rewrite of Claude Code, configure it via environment variables before launching:
-```bash
-export OPENAI_BASE_URL="http://localhost:8787/v1"
-export OPENAI_API_KEY="dummy"
-clawcode --model auto
-```
-
-#### 10. AutoGPT
+#### 6. AutoGPT
 Modify your `.env` file to route the core ChatGPT calls to your local server:
 ```env
 OPENAI_API_BASE_URL="http://localhost:8787/v1"
 OPENAI_API_KEY="dummy"
 SMART_LLM="auto"
 FAST_LLM="auto"
-```
-
-#### 11. Claude Code (Anthropic CLI)
-Claude Code only speaks the Anthropic API format. To bridge it to ProxiPT, use the `litellm` proxy:
-1. Install LiteLLM: `pip install litellm`
-2. Start the proxy: `litellm --model openai/auto --api_base http://localhost:8787/v1 --api_key dummy`
-3. Run Claude Code using the proxy port (usually 4000):
-```bash
-export ANTHROPIC_BASE_URL="http://localhost:4000"
-export ANTHROPIC_API_KEY="dummy"
-claude
 ```
 
 #### Quick Python Sample Code

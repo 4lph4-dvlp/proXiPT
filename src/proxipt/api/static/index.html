@@ -127,165 +127,7 @@
 
                         <div class="integration-card">
                             <div class="integration-header">
-                                <h4>1. Cursor IDE</h4>
-                            </div>
-                            <div class="integration-body">
-                                1. Open Cursor Settings > Models.<br>
-                                2. Add a new <strong>OpenAI-compatible Base URL</strong>.<br>
-                                <div class="code-block">
-                                    <span>Base URL:</span> http://localhost:8787/v1<br>
-                                    <span>API Key:</span> dummy
-                                </div>
-                                3. Add Custom Model Names (e.g., <code>auto</code>, <code>claude-3.5-sonnet</code>).<br>
-                                4. Toggle them on to use them in chat/composer.
-                            </div>
-                        </div>
-                        
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>2. Cline (Roo Code) - VS Code</h4>
-                            </div>
-                            <div class="integration-body">
-                                1. Open VSCode Settings for the Extension.<br>
-                                2. Select <strong>API Provider: OpenAI Compatible</strong>.<br>
-                                <div class="code-block">
-                                    <span>Base URL:</span> http://localhost:8787/v1<br>
-                                    <span>API Key:</span> dummy<br>
-                                    <span>Model ID:</span> auto
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>3. Continue.dev (VS Code / JetBrains)</h4>
-                            </div>
-                            <div class="integration-body">
-                                1. Open your <code>config.json</code> setup file.<br>
-                                2. Add this block to your <code>"models"</code> array:<br>
-                                <div class="code-block">
-{<br>
-&nbsp;&nbsp;"title": "proXiPT",<br>
-&nbsp;&nbsp;"provider": "openai",<br>
-&nbsp;&nbsp;"model": "auto",<br>
-&nbsp;&nbsp;"apiKey": "dummy",<br>
-&nbsp;&nbsp;"apiBase": "http://localhost:8787/v1"<br>
-}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>4. Aider (Terminal Pair Programmer)</h4>
-                            </div>
-                            <div class="integration-body">
-                                Start the CLI tool with these specific flags:<br>
-                                <div class="code-block">
-                                    aider --openai-api-base http://localhost:8787/v1 --openai-api-key dummy --model openai/auto
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>5. OpenHands (Agent)</h4>
-                            </div>
-                            <div class="integration-body">
-                                Define the local connection directly in your workspace <code>.env</code> file:<br>
-                                <div class="code-block">
-LLM_PROVIDER="openai"<br>
-LLM_BASE_URL="http://localhost:8787/v1"<br>
-LLM_API_KEY="dummy"<br>
-LLM_MODEL="openai/auto"
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>6. OpenClaw (Autonomous OS Agent)</h4>
-                            </div>
-                            <div class="integration-body">
-                                Configure the custom provider in your `~/.openclaw/openclaw.json`:
-                                <div class="code-block">
-"models": {<br>
-&nbsp;&nbsp;"providers": {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"proxipt": {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"base_url": "http://localhost:8787/v1",<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"api": "openai-completions",<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"api_key": "dummy"<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;}<br>
-}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>7. Zed IDE</h4>
-                            </div>
-                            <div class="integration-body">
-                                Open your <code>settings.json</code> via <code>cmd+,</code> and configure:<br>
-                                <div class="code-block">
-"language_models": {<br>
-&nbsp;&nbsp;"openai": {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"api_url": "http://localhost:8787/v1",<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"available_models": [{"name": "auto", "max_tokens": 128000}]<br>
-&nbsp;&nbsp;}<br>
-}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>8. CodeGPT (VS Code)</h4>
-                            </div>
-                            <div class="integration-body">
-                                1. <strong>Provider</strong>: <code>OpenAI</code>.<br>
-                                2. Note: CodeGPT requires the exact completions path:<br>
-                                <div class="code-block">
-                                    <span>Custom Endpoint:</span> http://localhost:8787/v1/chat/completions<br>
-                                    <span>Model:</span> auto<br>
-                                    <span>Auth Token:</span> dummy
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>9. ClawCode (Harness CLI)</h4>
-                            </div>
-                            <div class="integration-body">
-                                Configure it via environment variables before launching your workspace:
-                                <div class="code-block">
-export OPENAI_BASE_URL="http://localhost:8787/v1"<br>
-export OPENAI_API_KEY="dummy"<br>
-clawcode --model auto
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>10. AutoGPT</h4>
-                            </div>
-                            <div class="integration-body">
-                                Route the Python agent loop through your local endpoint in `.env`:<br>
-                                <div class="code-block">
-OPENAI_API_BASE_URL="http://localhost:8787/v1"<br>
-OPENAI_API_KEY="dummy"<br>
-SMART_LLM="auto"<br>
-FAST_LLM="auto"
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="integration-card" style="margin-top:1.5rem;">
-                            <div class="integration-header">
-                                <h4>11. Claude Code (Anthropic CLI)</h4>
+                                <h4>1. Claude Code (Anthropic CLI)</h4>
                             </div>
                             <div class="integration-body">
                                 1. Claude Code only speaks Anthropic API format. To bridge it to ProxiPT, install <code>litellm</code>:<br>
@@ -301,6 +143,88 @@ FAST_LLM="auto"
                                     export ANTHROPIC_BASE_URL="http://localhost:4000"<br>
                                     export ANTHROPIC_API_KEY="dummy"<br>
                                     claude
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>2. ClawCode (Harness CLI)</h4>
+                            </div>
+                            <div class="integration-body">
+                                Configure it via environment variables before launching your workspace:
+                                <div class="code-block">
+                                export OPENAI_BASE_URL="http://localhost:8787/v1"<br>
+                                export OPENAI_API_KEY="dummy"<br>
+                                clawcode --model auto
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>3. Cursor IDE</h4>
+                            </div>
+                            <div class="integration-body">
+                                1. Open Cursor Settings > Models.<br>
+                                2. Add a new <strong>OpenAI-compatible Base URL</strong>.<br>
+                                <div class="code-block">
+                                    <span>Base URL:</span> http://localhost:8787/v1<br>
+                                    <span>API Key:</span> dummy
+                                </div>
+                                3. Add Custom Model Names (e.g., <code>auto</code>, <code>claude-3.5-sonnet</code>).<br>
+                                4. Toggle them on to use them in chat/composer.
+                            </div>
+                        </div>
+
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>4. OpenClaw (Autonomous OS Agent)</h4>
+                            </div>
+                            <div class="integration-body">
+                                Configure the custom provider in your `~/.openclaw/openclaw.json`:
+                                <div class="code-block">
+                                "models": {<br>
+                                &nbsp;&nbsp;"providers": {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;"proxipt": {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"base_url": "http://localhost:8787/v1",<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"api": "openai-completions",<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"api_key": "dummy"<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                                &nbsp;&nbsp;}<br>
+                                }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>5. Zed IDE</h4>
+                            </div>
+                            <div class="integration-body">
+                                Open your <code>settings.json</code> via <code>cmd+,</code> and configure:<br>
+                                <div class="code-block">
+                                "language_models": {<br>
+                                &nbsp;&nbsp;"openai": {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;"api_url": "http://localhost:8787/v1",<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;"available_models": [{"name": "auto", "max_tokens": 128000}]<br>
+                                &nbsp;&nbsp;}<br>
+                                }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>6. AutoGPT</h4>
+                            </div>
+                            <div class="integration-body">
+                                Route the Python agent loop through your local endpoint in `.env`:<br>
+                                <div class="code-block">
+                                OPENAI_API_BASE_URL="http://localhost:8787/v1"<br>
+                                OPENAI_API_KEY="dummy"<br>
+                                SMART_LLM="auto"<br>
+                                FAST_LLM="auto"
                                 </div>
                             </div>
                         </div>
