@@ -30,7 +30,7 @@ class CopilotProvider(BaseProvider):
         if not url or "copilot.microsoft.com" not in url:
             log.info("Navigating to Microsoft Copilot")
             await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
         try:
             await page.wait_for_selector('textarea, div[contenteditable="true"]', timeout=15_000)
         except Exception:
@@ -39,14 +39,14 @@ class CopilotProvider(BaseProvider):
     async def create_new_chat(self, page: Page) -> None:
         try:
             btn = page.locator(self.SEL_NEW_CHAT).first
-            if await btn.is_visible():
+            if await btn.is_visible(timeout=2000):
                 await btn.click()
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(1)
                 return
         except Exception:
             pass
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
 
     async def send_message(self, page: Page, prompt: str) -> str:
         await self.create_new_chat(page)
@@ -76,7 +76,7 @@ class CopilotProvider(BaseProvider):
         return None
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.3)
         textarea = page.locator("textarea").first
         try:
             await textarea.wait_for(timeout=10_000)
@@ -86,10 +86,10 @@ class CopilotProvider(BaseProvider):
             editor = page.locator("div[contenteditable='true']").first
             await editor.click()
             await page.keyboard.insert_text(prompt)
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.2)
         try:
             send_btn = page.locator(self.SEL_SEND).first
-            if await send_btn.is_visible():
+            if await send_btn.is_visible(timeout=2000):
                 await send_btn.click()
                 return
         except Exception:

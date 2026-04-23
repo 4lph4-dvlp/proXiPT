@@ -72,24 +72,8 @@ async def _complete_response(provider, prompt, system_prompt, requested_model, m
     page = await pool.acquire_page(provider)
     try:
         await provider_router.on_request_start(provider)
-        await provider.ensure_ready(page)
 
-        # Check for errors before sending
-        error = await provider.detect_error(page)
-        if error == "rate_limit":
-            await provider_router.on_rate_limit(provider)
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
-        elif error == "captcha":
-            await provider_router.on_captcha(provider)
-            raise HTTPException(status_code=503, detail="CAPTCHA required — use /admin/resolve")
-        elif error == "auth_expired":
-            raise HTTPException(status_code=401, detail="Session expired — use /admin/setup")
-
-        # Set system prompt if supported
-        if system_prompt and provider.supports_system_prompt:
-            await provider.set_system_prompt(page, system_prompt)
-
-        # Send and get response
+        # Send and get response — provider handles navigation internally
         response_text = await provider.send_message(page, prompt)
 
         if not response_text:
@@ -123,27 +107,12 @@ async def _stream_response(provider, prompt, system_prompt, requested_model, mod
 
     try:
         await provider_router.on_request_start(provider)
-        await provider.ensure_ready(page)
-
-        error = await provider.detect_error(page)
-        if error:
-            error_data = {"error": {"message": f"Provider error: {error}", "type": error}}
-            yield f"data: {json.dumps(error_data)}\n\n"
-            yield "data: [DONE]\n\n"
-            if error == "rate_limit":
-                await provider_router.on_rate_limit(provider)
-            elif error == "captcha":
-                await provider_router.on_captcha(provider)
-            return
-
-        if system_prompt and provider.supports_system_prompt:
-            await provider.set_system_prompt(page, system_prompt)
 
         # First chunk with role
         first_chunk = build_chunk("", requested_model, chunk_id, include_role=True)
         yield f"data: {first_chunk.model_dump_json()}\n\n"
 
-        # Stream content chunks
+        # Stream content chunks — provider handles navigation internally
         async for text_chunk in provider.send_message_streaming(page, prompt):
             if text_chunk:
                 chunk = build_chunk(text_chunk, requested_model, chunk_id)

@@ -20,52 +20,40 @@ class ChatGPTProvider(BaseProvider):
     supports_images = True
     supports_system_prompt = False
 
-    SEL_TEXTAREA = 'div#prompt-textarea, textarea[data-id="root"], div[contenteditable="true"]'
+    SEL_TEXTAREA = '#prompt-textarea'
     SEL_SEND = 'button[data-testid="send-button"], button[aria-label*="Send"]'
     SEL_RESPONSE = 'div[data-message-author-role="assistant"] .markdown, div.agent-turn .markdown'
     SEL_NEW_CHAT = 'a[href="/"], nav a:first-child, button[aria-label*="New chat"]'
-    SEL_MODEL_SELECT = 'button[aria-haspopup="menu"][class*="text"], div[class*="model-selector"]'
 
     async def ensure_ready(self, page: Page) -> None:
         url = page.url
         if not url or "chatgpt.com" not in url:
             log.info("Navigating to ChatGPT")
             await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
         try:
             await page.wait_for_selector(
-                'div#prompt-textarea, div[contenteditable="true"], textarea',
+                '#prompt-textarea, div[contenteditable="true"], textarea',
                 timeout=15_000,
             )
         except Exception:
             log.warning("ChatGPT input area not found — login may be needed")
 
     async def create_new_chat(self, page: Page) -> None:
-        try:
-            new_btn = page.locator(self.SEL_NEW_CHAT).first
-            if await new_btn.is_visible():
-                await new_btn.click()
-                await asyncio.sleep(1.5)
-                return
-        except Exception:
-            pass
+        """Navigate to fresh chat. Prefer clicking New Chat to avoid full reload."""
+        url = page.url or ""
+        if "chatgpt.com" in url:
+            try:
+                new_btn = page.locator(self.SEL_NEW_CHAT).first
+                if await new_btn.is_visible(timeout=2000):
+                    await new_btn.click()
+                    await asyncio.sleep(1)
+                    return
+            except Exception:
+                pass
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(3)
-
-    async def select_model(self, page: Page, model_name: str) -> None:
-        try:
-            selector = page.locator(self.SEL_MODEL_SELECT).first
-            if await selector.is_visible():
-                await selector.click()
-                await asyncio.sleep(0.5)
-                option = page.locator(f'[role="menuitem"]:has-text("{model_name}")').first
-                if await option.is_visible():
-                    await option.click()
-                    await asyncio.sleep(0.5)
-                    log.info("Selected model: %s", model_name)
-        except Exception as e:
-            log.debug("Model selection skipped: %s", e)
+        await asyncio.sleep(2)
 
     async def send_message(self, page: Page, prompt: str) -> str:
         await self.create_new_chat(page)
@@ -96,7 +84,7 @@ class ChatGPTProvider(BaseProvider):
             return "captcha"
         if any(p in lower for p in ["log in", "sign up", "auth0"]):
             try:
-                editor = page.locator('div#prompt-textarea, div[contenteditable="true"]')
+                editor = page.locator('#prompt-textarea, div[contenteditable="true"]')
                 if await editor.count() == 0:
                     return "auth_expired"
             except Exception:
@@ -104,29 +92,52 @@ class ChatGPTProvider(BaseProvider):
         return None
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.3)
 
-        # ChatGPT uses a contenteditable div with id prompt-textarea
-        editor = page.locator('div#prompt-textarea, div[contenteditable="true"]').first
+        # Dismiss overlapping popups ("Join ChatGPT Plus", "See what's new", etc.)
+        await page.keyboard.press("Escape")
+        await asyncio.sleep(0.1)
+        await page.keyboard.press("Escape")
+        await asyncio.sleep(0.2)
+
+        # ChatGPT #prompt-textarea is a <div contenteditable="true">.
+        # Playwright .fill() DOES NOT WORK on contenteditable divs.
+        # We must use JavaScript to inject text directly into the DOM.
         try:
-            await editor.wait_for(timeout=10_000)
-            await editor.click()
-            await asyncio.sleep(0.3)
-            # ChatGPT's prompt-textarea works best with keyboard input
-            await page.keyboard.insert_text(prompt)
-        except Exception:
-            textarea = page.locator("textarea").first
-            await textarea.click()
-            await textarea.fill(prompt)
+            await page.wait_for_selector('#prompt-textarea', timeout=10_000)
+            await page.evaluate("""(prompt) => {
+                const el = document.querySelector('#prompt-textarea');
+                if (!el) throw new Error('prompt-textarea not found');
+                // Clear existing content
+                el.innerHTML = '';
+                // Create a <p> with the text (ChatGPT expects this structure)
+                const p = document.createElement('p');
+                p.textContent = prompt;
+                el.appendChild(p);
+                // Dispatch input event so React picks up the change
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }""", prompt)
+            log.debug("Injected prompt via JS into #prompt-textarea")
+        except Exception as e:
+            log.warning("ChatGPT JS injection failed: %s — trying keyboard fallback", e)
+            try:
+                editor = page.locator('#prompt-textarea').first
+                await editor.click(force=True, timeout=5000)
+                await asyncio.sleep(0.2)
+                await page.keyboard.insert_text(prompt)
+            except Exception as e2:
+                log.error("ChatGPT keyboard fallback also failed: %s", e2)
+                return
 
         await asyncio.sleep(0.3)
 
-        # Click send
+        # Click the send button
         try:
             send_btn = page.locator(self.SEL_SEND).first
-            if await send_btn.is_visible() and await send_btn.is_enabled():
+            if await send_btn.is_visible(timeout=3000) and await send_btn.is_enabled():
                 await send_btn.click()
                 return
         except Exception:
             pass
+        # Fallback: Enter key (ChatGPT uses Enter to send)
         await page.keyboard.press("Enter")

@@ -30,7 +30,7 @@ class GeminiProvider(BaseProvider):
         if not url or "gemini.google.com" not in url:
             log.info("Navigating to Gemini")
             await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
         try:
             await page.wait_for_selector(
@@ -43,14 +43,14 @@ class GeminiProvider(BaseProvider):
     async def create_new_chat(self, page: Page) -> None:
         try:
             new_btn = page.locator(self.SEL_NEW_CHAT).first
-            if await new_btn.is_visible():
+            if await new_btn.is_visible(timeout=2000):
                 await new_btn.click()
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(1)
                 return
         except Exception:
             pass
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
 
     async def send_message(self, page: Page, prompt: str) -> str:
         await self.create_new_chat(page)
@@ -85,15 +85,15 @@ class GeminiProvider(BaseProvider):
         return None
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.3)
 
         # Gemini uses contenteditable div
         editor = page.locator('div[contenteditable="true"]').first
         try:
             await editor.wait_for(timeout=10_000)
             await editor.click()
-            await asyncio.sleep(0.3)
-            # For contenteditable, use keyboard typing after clearing
+            await asyncio.sleep(0.2)
+            # Clear and type via keyboard for contenteditable
             await editor.fill("")
             await page.keyboard.insert_text(prompt)
         except Exception:
@@ -102,12 +102,12 @@ class GeminiProvider(BaseProvider):
             await textarea.click()
             await textarea.fill(prompt)
 
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.2)
 
         # Click send
         try:
             send_btn = page.locator(self.SEL_SEND).first
-            if await send_btn.is_visible():
+            if await send_btn.is_visible(timeout=2000):
                 await send_btn.click()
                 return
         except Exception:

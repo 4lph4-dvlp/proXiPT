@@ -31,8 +31,8 @@ class BrowserPool:
         self._pw: Playwright | None = None
         self._browser: Browser | None = None
 
-        # provider_name -> list of available pages
-        self._available: dict[str, asyncio.Queue[Page]] = {}
+        # provider_name -> concurrency semaphore
+        self._semaphores: dict[str, asyncio.Semaphore] = {}
         # provider_name -> set of all pages (for cleanup)
         self._all_pages: dict[str, list[Page]] = {}
         # provider_name -> BrowserContext
@@ -57,6 +57,8 @@ class BrowserPool:
         self._browser = await launcher.launch(
             headless=cfg.headless,
             slow_mo=cfg.slow_mo,
+            args=["--disable-blink-features=AutomationControlled"],
+            ignore_default_args=["--enable-automation"],
         )
         self._started = True
         log.info("Browser started")
@@ -114,6 +116,7 @@ class BrowserPool:
             kwargs["storage_state"] = str(session_path)
 
         ctx = await self._browser.new_context(**kwargs)
+        await ctx.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self._contexts[provider_name] = ctx
         return ctx
 
@@ -132,40 +135,40 @@ class BrowserPool:
         log.info("Session saved for %s", provider_name)
 
     async def acquire_page(self, provider: BaseProvider) -> Page:
-        """Get a free page for a provider (blocks if all pages busy)."""
+        """Create a new page strictly governed by the max_pages_per_provider semaphore."""
         name = provider.name
         async with self._lock:
-            if name not in self._available:
-                self._available[name] = asyncio.Queue()
+            if name not in self._semaphores:
+                cfg = get_config().browser
+                self._semaphores[name] = asyncio.Semaphore(cfg.max_pages_per_provider)
                 self._all_pages[name] = []
 
-        queue = self._available[name]
+        # Wait for a concurrency slot
+        log.debug("Waiting for slot for %s", name)
+        await self._semaphores[name].acquire()
 
-        # Try getting an existing idle page
-        if not queue.empty():
-            page = await queue.get()
-            if not page.is_closed():
-                return page
-
-        # Check if we can create more pages
-        cfg = get_config().browser
-        if len(self._all_pages[name]) < cfg.max_pages_per_provider:
-            ctx = await self.get_context(name)
-            page = await ctx.new_page()
-            self._all_pages[name].append(page)
-            log.info("Created new page for %s (total: %d)", name, len(self._all_pages[name]))
-            return page
-
-        # All pages busy — wait for one to be released
-        log.debug("Waiting for free page for %s", name)
-        page = await queue.get()
+        # Create a brand new page for pristine isolation
+        ctx = await self.get_context(name)
+        page = await ctx.new_page()
+        self._all_pages[name].append(page)
+        log.info("Created new page for %s", name)
         return page
 
     async def release_page(self, provider: BaseProvider, page: Page) -> None:
-        """Return a page to the available pool."""
+        """Release a page after use by completely closing it."""
         name = provider.name
-        if name in self._available and not page.is_closed():
-            await self._available[name].put(page)
+
+        try:
+            if not page.is_closed():
+                await page.close()
+        except Exception:
+            pass
+            
+        if name in self._all_pages and page in self._all_pages[name]:
+            self._all_pages[name].remove(page)
+
+        if name in self._semaphores:
+            self._semaphores[name].release()
 
     # ------------------------------------------------------------------
     # GUI mode helpers
@@ -181,7 +184,12 @@ class BrowserPool:
         assert self._pw is not None
         cfg = get_config().browser
         launcher = getattr(self._pw, cfg.browser_type)
-        gui_browser = await launcher.launch(headless=False, slow_mo=0)
+        gui_browser = await launcher.launch(
+            headless=False, 
+            slow_mo=0,
+            args=["--disable-blink-features=AutomationControlled"],
+            ignore_default_args=["--enable-automation"],
+        )
 
         session_path = Path(cfg.sessions_dir) / f"{provider_name}_session.json"
         kwargs: dict = {"viewport": {"width": 1280, "height": 900}}
@@ -189,6 +197,7 @@ class BrowserPool:
             kwargs["storage_state"] = str(session_path)
 
         ctx = await gui_browser.new_context(**kwargs)
+        await ctx.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page = await ctx.new_page()
         await page.goto(url, wait_until="domcontentloaded")
         log.info("GUI browser opened for %s at %s", provider_name, url)
@@ -223,14 +232,6 @@ class BrowserPool:
                     await p.close()
                 except Exception:
                     pass
-            if provider_name in self._available:
-                # Drain the queue
-                q = self._available.pop(provider_name)
-                while not q.empty():
-                    try:
-                        q.get_nowait()
-                    except asyncio.QueueEmpty:
-                        break
             try:
                 await old_ctx.close()
             except Exception:

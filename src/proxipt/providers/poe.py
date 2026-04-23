@@ -93,3 +93,7 @@ class PoeProvider(BaseProvider):
         except Exception:
             pass
         await page.keyboard.press("Enter")
+        await __import__("asyncio").sleep(0.1)
+        await page.keyboard.press("Control+Enter")
+        await __import__("asyncio").sleep(0.1)
+        await page.keyboard.press("Meta+Enter")

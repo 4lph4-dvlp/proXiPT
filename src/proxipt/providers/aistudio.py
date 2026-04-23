@@ -31,7 +31,7 @@ class AIStudioProvider(BaseProvider):
         if not url or "aistudio.google.com" not in url:
             log.info("Navigating to AI Studio")
             await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
         try:
             await page.wait_for_selector(
@@ -43,7 +43,7 @@ class AIStudioProvider(BaseProvider):
 
     async def create_new_chat(self, page: Page) -> None:
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.5)
 
     async def set_system_prompt(self, page: Page, prompt: str) -> None:
         try:
@@ -85,23 +85,30 @@ class AIStudioProvider(BaseProvider):
         return None
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
         textarea = page.locator("textarea").first
         try:
-            await textarea.wait_for(timeout=10_000)
-            await textarea.click()
+            await textarea.wait_for(timeout=5_000)
+            await textarea.click(timeout=5_000)
             await textarea.fill(prompt)
-        except Exception:
-            editor = page.locator("div[contenteditable='true']").first
-            await editor.click()
-            await page.keyboard.insert_text(prompt)
-
-        await asyncio.sleep(0.3)
+        except Exception as e:
+            log.warning(f"Textarea approach failed: {e}")
+            try:
+                editor = page.locator("div[contenteditable='true']").first
+                await editor.click(timeout=5_000)
+                await page.keyboard.insert_text(prompt)
+            except Exception as e2:
+                log.error(f"Fallback editor approach failed: {e2}")
+                await asyncio.sleep(0.5)
         try:
             run_btn = page.locator(self.SEL_SEND).first
-            if await run_btn.is_visible():
-                await run_btn.click()
+            if await run_btn.is_visible(timeout=2000):
+                await run_btn.click(timeout=2000)
                 return
         except Exception:
             pass
-        await page.keyboard.press("Enter")
+        
+        # Google AI Studio usually uses Ctrl+Enter to Run prompt
+        await page.keyboard.press("Control+Enter")
+        await asyncio.sleep(0.2)
+        await page.keyboard.press("Meta+Enter") # Mac fallback

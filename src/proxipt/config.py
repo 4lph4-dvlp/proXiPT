@@ -122,6 +122,16 @@ def load_config(path: Path | str | None = None) -> AppConfig:
         data["custom_providers"] = {}
 
     _config = AppConfig(**data)
+    
+    # Environment overrides
+    headless_env = os.getenv("PROXIPT_HEADLESS")
+    if headless_env is not None:
+        val = headless_env.lower()
+        if val in ("0", "false", "no"):
+            _config.browser.headless = False
+        elif val in ("1", "true", "yes"):
+            _config.browser.headless = True
+            
     return _config
 
 

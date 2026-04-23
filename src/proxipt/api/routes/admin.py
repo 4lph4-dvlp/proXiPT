@@ -178,6 +178,13 @@ async def toggle_provider(provider_name: str):
             # Update runtime config
             state.config.enabled = new_state
             
+            if new_state:
+                # Force reset health state explicitly when manually re-enabling
+                state.is_healthy = True
+                state.last_error = None
+                state.consecutive_errors = 0
+                state.cooldown_until = 0.0
+            
             return {
                 "status": "success",
                 "provider": provider_name,

@@ -20,11 +20,11 @@ class GroqProvider(BaseProvider):
     supports_images = False
     supports_system_prompt = True
 
-    SEL_TEXTAREA = 'textarea[placeholder*="message"], textarea[name*="content"], textarea'
-    SEL_SEND = 'button:has-text("Submit"), button[type="submit"]'
-    SEL_RESPONSE = 'div[class*="response"], div[class*="output"], pre, div[class*="message"][class*="assistant"]'
+    # Groq has multiple textareas: System (first) + User (last)
+    SEL_TEXTAREA = 'textarea'
+    SEL_SEND = 'button:has-text("Submit")'
+    SEL_RESPONSE = 'div.markdown, div.prose, div[class*="markdown"], div[class*="message"][class*="assistant"]'
     SEL_SYSTEM = 'textarea[placeholder*="System"], textarea:first-of-type'
-    SEL_MODEL_SELECT = 'select[class*="model"], button[class*="model"], div[class*="model-select"]'
 
     async def ensure_ready(self, page: Page) -> None:
         url = page.url
@@ -40,7 +40,7 @@ class GroqProvider(BaseProvider):
 
     async def create_new_chat(self, page: Page) -> None:
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.5)
 
     async def set_system_prompt(self, page: Page, prompt: str) -> None:
         try:
@@ -82,21 +82,40 @@ class GroqProvider(BaseProvider):
         return None
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
-        await asyncio.sleep(0.5)
-        # Groq playground usually has multiple textareas — system + user
-        textareas = page.locator("textarea")
-        count = await textareas.count()
-        # Use the last textarea (user message)
-        target = textareas.last if count > 1 else textareas.first
-        await target.click()
-        await target.fill(prompt)
         await asyncio.sleep(0.3)
 
+        # Groq playground has multiple textareas — System (first) + User (last)
+        textareas = page.locator("textarea")
+        count = await textareas.count()
+        # Target the last textarea (user message input)
+        target = textareas.last if count > 1 else textareas.first
+        
         try:
-            send_btn = page.locator(self.SEL_SEND).first
-            if await send_btn.is_visible():
-                await send_btn.click()
-                return
-        except Exception:
-            pass
-        await target.press("Enter")
+            await target.click()
+            await target.fill(prompt)
+        except Exception as e:
+            log.warning("Groq fill failed: %s — trying keyboard", e)
+            await target.click(force=True)
+            await page.keyboard.insert_text(prompt)
+        
+        await asyncio.sleep(0.3)
+
+        # Groq's submit button contains the text "Submit"
+        submitted = False
+        for sel in [
+            'button:has-text("Submit")',
+        ]:
+            try:
+                btn = page.locator(sel).last
+                if await btn.is_visible(timeout=1000) and await btn.is_enabled():
+                    await btn.click()
+                    submitted = True
+                    log.debug("Groq submitted via selector: %s", sel)
+                    break
+            except Exception:
+                continue
+        
+        if not submitted:
+            # Last resort: Ctrl+Enter (many playground UIs use this)
+            log.debug("Groq: no submit button found, trying Ctrl+Enter")
+            await page.keyboard.press("Control+Enter")

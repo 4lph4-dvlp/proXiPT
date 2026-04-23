@@ -119,18 +119,34 @@ class ProviderRouter:
         return available[0].provider, model
 
     async def _resolve_virtual(self, vmodel: str, rule: RoutingRule) -> tuple[BaseProvider, str]:
-        """Resolve a virtual model by trying providers in order."""
+        """Resolve a virtual model by trying providers according to their strategy."""
+        candidates: list[ProviderState] = []
         for pname in rule.providers:
             state = self._states.get(pname)
-            if state and state.is_available:
-                # Use the provider's default model
-                default_model = next(
-                    (m.id for m in state.config.models if m.is_default),
-                    state.config.models[0].id if state.config.models else "default",
-                )
-                return state.provider, default_model
+            if state and state.config.enabled:
+                candidates.append(state)
 
-        raise LookupError(f"No available provider for virtual model '{vmodel}'")
+        if not candidates:
+            raise LookupError(f"No enabled providers found for virtual model '{vmodel}'")
+
+        available = [c for c in candidates if c.is_available]
+        if not available:
+            candidates.sort(key=lambda s: s.cooldown_until)
+            wait_time = candidates[0].cooldown_until - time.time()
+            if wait_time > 0:
+                log.info("All providers for '%s' on cooldown, waiting %.1fs", vmodel, wait_time)
+                await asyncio.sleep(wait_time)
+            best_state = candidates[0]
+        else:
+            if rule.strategy == "round_robin":
+                available.sort(key=lambda s: s.last_request_time)
+            best_state = available[0]
+
+        default_model = next(
+            (m.id for m in best_state.config.models if m.is_default),
+            best_state.config.models[0].id if best_state.config.models else "default",
+        )
+        return best_state.provider, default_model
 
     # ------------------------------------------------------------------
     # Request lifecycle hooks

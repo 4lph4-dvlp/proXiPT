@@ -33,7 +33,7 @@ class DeepSeekProvider(BaseProvider):
         if not url or "deepseek.com" not in url:
             log.info("Navigating to DeepSeek Chat")
             await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-            await asyncio.sleep(2)
+            await asyncio.sleep(1.5)
 
         # Wait for the input area to appear
         try:
@@ -56,7 +56,7 @@ class DeepSeekProvider(BaseProvider):
             pass
         # Fallback: navigate to root
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.5)
 
     async def select_model(self, page: Page, model_name: str) -> None:
         """Select DeepSeek model (V3 or R1)."""

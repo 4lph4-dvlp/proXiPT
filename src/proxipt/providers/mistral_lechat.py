@@ -38,7 +38,7 @@ class MistralProvider(BaseProvider):
 
     async def create_new_chat(self, page: Page) -> None:
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.5)
 
     async def send_message(self, page: Page, prompt: str) -> str:
         await self.create_new_chat(page)
@@ -70,7 +70,7 @@ class MistralProvider(BaseProvider):
         return None
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.3)
         textarea = page.locator("textarea").first
         try:
             await textarea.wait_for(timeout=10_000)
@@ -80,10 +80,10 @@ class MistralProvider(BaseProvider):
             editor = page.locator("div[contenteditable='true']").first
             await editor.click()
             await page.keyboard.insert_text(prompt)
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.2)
         try:
             send_btn = page.locator(self.SEL_SEND).first
-            if await send_btn.is_visible():
+            if await send_btn.is_visible(timeout=2000):
                 await send_btn.click()
                 return
         except Exception:

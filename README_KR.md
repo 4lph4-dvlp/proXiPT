@@ -139,28 +139,115 @@ python -m proxipt.main
    - 로그인이 성공적으로 이뤄지고 웹 채팅 창이 나오면, 대시보드의 **"Close GUI & Save"** 버튼을 발동합니다.
    - 이후부터는 프로그램이 보이지 않는 Headless 상태에서 무인으로 구동됩니다!
 
-### 3. API 호출 방법 및 툴 연동
+### 3. API 호출 방법 및 주요 11대 AI 툴 연동
 
-완벽하게 뒤에서 돌아가는 무제한 OpenAI 호환 서버를 가지게 되셨습니다. 보다 쉬운 세팅을 위해 대시보드 내 **"Integrations"** 탭의 가이드를 복사하여 사용하세요.
+완벽하게 뒤에서 돌아가는 무제한 OpenAI 호환 서버를 얻으셨습니다. 아래 가이드를 따라 **가장 인기 있는 11종류의 AI 코딩 에이전트 및 IDE**에 연결해 보세요.
 
-<p align="center">
-  <img src="docs/dashboard_integrations.png" width="800" alt="연동 가이드">
-</p>
+> **공통 설정 가이드** 
+> - **API 엔드포인트(Base URL):** `http://localhost:8787/v1` (도구에 따라 끝에 `/chat/completions`를 붙여야 할 수도 있습니다)
+> - **API Key:** `dummy` (아무 문자열이나 가능. proXiPT는 키를 검증하지 않습니다)
+> - **Model Name:** `auto` (자율 로드밸런싱) 또는 `gpt-4o` 등 특정 모델명
 
-#### Cursor IDE / Cline 연동
+#### 1. Cursor IDE
 1. Cursor의 환경설정 (톱니바퀴 아이콘) -> `Models` 메뉴 이동
 2. **OpenAI API Key** 란에 아무 단어나 기재합니다 (예: `dummy`)
 3. **OpenAI Base URL** 란을 활성화 시키고 아래 주소를 적으세요: `http://localhost:8787/v1`
 4. 하단 모델 목록 추가창에 `auto` 라고 적고 `+` 버튼을 눌러 추가하면 끝입니다!
 
-#### Playground를 통한 자체 테스트
-서버와 대시보드가 잘 세팅되었는지 백엔드 로그 확인 없이, 대시보드의 자체 Playground에서 바로 챗봇과 대화하며 테스트해볼 수도 있습니다.
+#### 2. Cline (Roo Code) - VS Code 익스텐션
+1. Cline 패널의 톱니바퀴 설정 아이콘을 누릅니다.
+2. **API Provider**를 `OpenAI Compatible`로 변경합니다.
+3. **Base URL**에 `http://localhost:8787/v1`를 입력합니다.
+4. **API Key**에는 `dummy`, **Model ID**에는 `auto`를 적어줍니다.
 
-<p align="center">
-  <img src="docs/dashboard_playground.png" width="800" alt="플레이그라운드">
-</p>
+#### 3. Continue.dev (VS Code / JetBrains)
+1. 톱니바퀴 아이콘을 눌러 `config.json` 파일을 엽니다.
+2. `"models"` 배열 안에 다음과 같은 블록을 추가합니다:
+```json
+{
+  "title": "proXiPT",
+  "provider": "openai",
+  "model": "auto",
+  "apiKey": "dummy",
+  "apiBase": "http://localhost:8787/v1"
+}
+```
 
-#### 파이썬 코드로 호출 (예제)
+#### 4. Aider (터미널 AI 페어 프로그래머)
+터미널에서 aider를 구동할 때 아래와 같이 커스텀 호스트 플래그를 넘겨줍니다.
+```bash
+aider --openai-api-base http://localhost:8787/v1 --openai-api-key dummy --model openai/auto
+```
+
+#### 5. OpenHands (구 OpenDevin)
+작업 프로젝트 루트에 위치한 `.env` 파일에 다음 환경 변수를 세팅합니다.
+```env
+LLM_PROVIDER="openai"
+LLM_BASE_URL="http://localhost:8787/v1"
+LLM_API_KEY="dummy"
+LLM_MODEL="openai/auto"
+```
+
+#### 6. OpenClaw (운영체제 제어 자율 에이전트)
+`~/.openclaw/openclaw.json` 설정 파일에 커스텀 제공자를 등록합니다.
+```json
+"models": {
+  "providers": {
+    "proxipt": {
+      "base_url": "http://localhost:8787/v1",
+      "api": "openai-completions",
+      "api_key": "dummy"
+    }
+  }
+}
+```
+
+#### 7. Zed IDE
+`cmd+,` 단축키를 눌러 `settings.json`을 열고 어시스턴트 모델 부분을 교체합니다:
+```json
+"language_models": {
+  "openai": {
+    "api_url": "http://localhost:8787/v1",
+    "available_models": [{"name": "auto", "max_tokens": 128000}]
+  }
+}
+```
+
+#### 8. CodeGPT (VS Code 인기 플러그인)
+1. 설정(Settings) 창에서 CodeGPT를 검색합니다.
+2. **Provider**를 `OpenAI`로 설정합니다.
+3. **Custom Endpoint** 란에 풀 주소를 적습니다: `http://localhost:8787/v1/chat/completions`
+4. Model에 `auto`, Auth Token에 `dummy`를 채워 넣습니다.
+
+#### 9. ClawCode (터미널 하네스 CLI)
+Claude Code의 오픈소스 클론인 ClawCode는 터미널 환경 변수로 간단히 주입 가능합니다.
+```bash
+export OPENAI_BASE_URL="http://localhost:8787/v1"
+export OPENAI_API_KEY="dummy"
+clawcode --model auto
+```
+
+#### 10. AutoGPT
+`.env` 파일 수정을 통해 API 요청을 로컬로 리디렉션합니다.
+```env
+OPENAI_API_BASE_URL="http://localhost:8787/v1"
+OPENAI_API_KEY="dummy"
+SMART_LLM="auto"
+FAST_LLM="auto"
+```
+
+#### 11. Claude Code (Anthropic CLI)
+Claude Code는 Anthropic API 형식만 통신이 가능합니다. ProxiPT와 연결하려면 `litellm` 프록시가 필요합니다:
+1. 터미널에서 LiteLLM 설치: `pip install litellm`
+2. Anthropic 요청을 OpenAI로 번역해주는 프록시 실행: `litellm --model openai/auto --api_base http://localhost:8787/v1 --api_key dummy`
+3. 새 터미널에서 LiteLLM 포트(기본 4000)를 바라보게 한 뒤 실행:
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:4000"
+export ANTHROPIC_API_KEY="dummy"
+claude
+```
+
+#### 💡 기타: 파이썬 코드로 직접 호출하기 (예제)
 ```python
 import openai
 
@@ -170,7 +257,7 @@ client = openai.OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="auto",       # 특정 모델 지정 가능: "gpt-4o", "gemini-2.0-flash" 등
+    model="auto",
     messages=[{"role": "user", "content": "너는 이제 프로야."}],
     stream=True
 )
