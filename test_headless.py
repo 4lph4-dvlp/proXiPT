@@ -10,7 +10,7 @@ async def main():
     print("Testing ChatGPT in headless mode via API...")
     try:
         response = await client.chat.completions.create(
-            model="chatgpt",
+            model="duckai-gpt-4o-mini",
             messages=[{"role": "user", "content": "What is 3 + 4? Just say the number."}],
             stream=False
         )

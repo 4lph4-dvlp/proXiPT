@@ -62,6 +62,10 @@ class BaseProvider(ABC):
     # Optional overrides
     # ------------------------------------------------------------------
 
+    async def fetch_available_models(self, page: Page) -> list[str]:
+        """Scrape the web UI to return a list of available models. No-op by default."""
+        return []
+
     async def create_new_chat(self, page: Page) -> None:
         """Start a fresh conversation (default: navigate to base_url)."""
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)

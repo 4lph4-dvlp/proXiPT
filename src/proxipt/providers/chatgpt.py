@@ -70,6 +70,57 @@ class ChatGPTProvider(BaseProvider):
         ):
             yield chunk
 
+    async def fetch_available_models(self, page: Page) -> list[str]:
+        """Scrape the available models from the dropdown."""
+        models = []
+        try:
+            # Click the model selector dropdown
+            dropdown = page.locator('div[data-testid="model-switcher"], button[aria-haspopup="menu"]').first
+            if await dropdown.is_visible(timeout=5000):
+                await dropdown.click()
+                await asyncio.sleep(0.5)
+                # Find menu items
+                items = page.locator('div[role="menuitem"] .text-token-text-primary, div[role="menuitem"] span')
+                count = await items.count()
+                for i in range(count):
+                    text = await items.nth(i).inner_text()
+                    if text and text.strip():
+                        # Normalize simple names (e.g. "GPT-4o" -> "gpt-4o")
+                        model_id = text.strip().lower().replace(" ", "-")
+                        models.append(model_id)
+                
+                # Close dropdown
+                await page.keyboard.press("Escape")
+        except Exception as e:
+            log.warning("Could not fetch models for ChatGPT: %s", e)
+        return models
+
+    async def select_model(self, page: Page, model_name: str) -> None:
+        """Select a model from the dropdown."""
+        try:
+            dropdown = page.locator('div[data-testid="model-switcher"], button[aria-haspopup="menu"]').first
+            if await dropdown.is_visible(timeout=5000):
+                await dropdown.click()
+                await asyncio.sleep(0.5)
+                
+                items = page.locator('div[role="menuitem"]')
+                count = await items.count()
+                for i in range(count):
+                    item = items.nth(i)
+                    text = await item.inner_text()
+                    # match normalized
+                    if model_name.replace("-", " ") in text.lower():
+                        await item.click()
+                        await asyncio.sleep(0.5)
+                        log.info("Selected model %s in ChatGPT", model_name)
+                        return
+                
+                # If not found, close dropdown
+                await page.keyboard.press("Escape")
+                log.warning("Model %s not found in ChatGPT UI", model_name)
+        except Exception as e:
+            log.warning("Could not select model for ChatGPT: %s", e)
+
     async def detect_error(self, page: Page) -> str | None:
         content = await page.content()
         lower = content.lower()

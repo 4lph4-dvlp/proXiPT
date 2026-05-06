@@ -31,42 +31,45 @@ class DuckAIProvider(BaseProvider):
             await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
             await asyncio.sleep(2)
 
-            # Duck.ai may show a terms/model selection dialog
+            # Duck.ai may show a terms/model selection dialog (English & Korean)
             try:
-                accept = page.locator('button:has-text("Get Started"), button:has-text("Accept"), button:has-text("I Agree")')
-                if await accept.count() > 0 and await accept.first.is_visible():
-                    await accept.first.click()
-                    await asyncio.sleep(1)
+                accept = page.locator('button:has-text("Get Started"), button:has-text("Accept"), button:has-text("I Agree"), button:has-text("동의하고 계속하기"), button:has-text("시작하기")')
+                if await accept.count() > 0:
+                    for i in range(await accept.count()):
+                        btn = accept.nth(i)
+                        if await btn.is_visible():
+                            await btn.click()
+                            await asyncio.sleep(1)
             except Exception:
                 pass
 
         try:
-            await page.wait_for_selector("textarea, div[contenteditable='true']", timeout=15_000)
+            await page.wait_for_selector(self.SEL_TEXTAREA, timeout=15_000)
         except Exception:
             log.warning("Duck.ai input not found")
 
     async def create_new_chat(self, page: Page) -> None:
         # Duck.ai resets per session — just reload
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(2)
         # Accept dialog if any
         try:
-            accept = page.locator('button:has-text("Get Started"), button:has-text("Accept")')
-            if await accept.count() > 0 and await accept.first.is_visible():
+            accept = page.locator('button:has-text("Get Started"), button:has-text("Accept"), button:has-text("동의하고 계속하기")')
+            if await accept.count() > 0:
                 await accept.first.click()
                 await asyncio.sleep(0.5)
         except Exception:
             pass
 
     async def send_message(self, page: Page, prompt: str) -> str:
-        await self.create_new_chat(page)
+        await self.ensure_ready(page)
         await self._inject_prompt(page, prompt)
         return await self._wait_for_response(
             page, self.SEL_RESPONSE, timeout=120_000, stability_checks=4,
         )
 
     async def send_message_streaming(self, page: Page, prompt: str) -> AsyncGenerator[str, None]:
-        await self.create_new_chat(page)
+        await self.ensure_ready(page)
         await self._inject_prompt(page, prompt)
         async for chunk in self._stream_response(
             page, self.SEL_RESPONSE, timeout=120_000, stability_checks=5,
@@ -81,17 +84,21 @@ class DuckAIProvider(BaseProvider):
         return None
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
-        await asyncio.sleep(0.3)
-        textarea = page.locator("textarea").first
+        await asyncio.sleep(0.5)
+        
+        # Focus input
+        textarea = page.locator(self.SEL_TEXTAREA).first
         try:
             await textarea.wait_for(timeout=10_000)
             await textarea.click()
             await textarea.fill(prompt)
         except Exception:
-            editor = page.locator("div[contenteditable='true']").first
-            await editor.click()
-            await page.keyboard.insert_text(prompt)
-        await asyncio.sleep(0.2)
+            # Fallback to keyboard
+            await page.keyboard.type(prompt)
+        
+        await asyncio.sleep(0.3)
+        
+        # Try send button
         try:
             send_btn = page.locator(self.SEL_SEND).first
             if await send_btn.is_visible(timeout=2000):
@@ -99,4 +106,6 @@ class DuckAIProvider(BaseProvider):
                 return
         except Exception:
             pass
+        
+        # Fallback to Enter
         await page.keyboard.press("Enter")

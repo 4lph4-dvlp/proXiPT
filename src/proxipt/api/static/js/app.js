@@ -29,6 +29,37 @@ let currentData = null;
 let chatHistory = [];
 let isGenerating = false;
 
+// Theme Toggle Logic
+const themeToggleBtn = document.getElementById('theme-toggle');
+const rootEl = document.documentElement;
+
+function setTheme(isDark) {
+    if (isDark) {
+        rootEl.classList.add('dark-mode');
+        themeToggleBtn.querySelector('span').innerText = 'Light Mode';
+        themeToggleBtn.querySelector('svg').innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+        localStorage.setItem('theme', 'dark');
+    } else {
+        rootEl.classList.remove('dark-mode');
+        themeToggleBtn.querySelector('span').innerText = 'Dark Mode';
+        themeToggleBtn.querySelector('svg').innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// Init theme
+const savedTheme = localStorage.getItem('theme');
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+    setTheme(true);
+} else {
+    setTheme(false);
+}
+
+themeToggleBtn.addEventListener('click', () => {
+    setTheme(!rootEl.classList.contains('dark-mode'));
+});
+
 // Format Utils
 function formatUptime(seconds) {
     const d = Math.floor(seconds / (3600*24));
@@ -82,6 +113,34 @@ async function handleResolve(name) { isSetupMode.add(name); renderGrids(); try {
 async function handleSaveClose(name) { try { const d = await apiCall('POST', `/admin/close-gui/${name}`); showToast('Success', d.message); isSetupMode.delete(name); fetchStatus(); } catch(e) {} }
 async function handleDeleteSession(name) { if(!confirm(`Delete session for ${name}?`)) return; try { await apiCall('DELETE', `/admin/sessions/${name}`); showToast('Deleted', `Session removed.`); fetchStatus(); } catch(e) {} }
 
+async function handleUploadSession(name) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await fetch(API_BASE + `/admin/sessions/upload/${name}`, {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                showToast('Uploaded', `Session for ${name} uploaded successfully.`);
+                fetchStatus();
+            } else {
+                const err = await res.json();
+                showToast('Upload Failed', err.detail || 'Unknown error', true);
+            }
+        } catch(err) {
+            showToast('Error', err.message, true);
+        }
+    };
+    input.click();
+}
+
 window.toggleProvider = async function(e, name) {
     e.preventDefault();
     const isChecked = e.target.checked;
@@ -120,10 +179,19 @@ function renderGrids() {
         if (isSetup) {
             actionsUI = `<button class="btn-primary" onclick="handleSaveClose('${p.name}')">Close GUI & Save</button>`;
         } else {
-            if (!p.session_valid || statusText === 'Needs Login') { actionsUI += `<button class="btn-primary" onclick="handleSetup('${p.name}')">Login (GUI)</button>`; }
-            else if (statusText === 'Captcha') { actionsUI += `<button class="btn-warning" onclick="handleResolve('${p.name}')">Solve Captcha</button>`; }
-            else { actionsUI += `<button onclick="handleSetup('${p.name}')">Re-Login</button>`; }
-            if (p.session_valid) { actionsUI += `<button class="btn-danger" onclick="handleDeleteSession('${p.name}')" title="Delete Session"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>`; }
+            if (!p.session_valid || statusText === 'Needs Login') { 
+                actionsUI += `<button class="btn-primary" onclick="handleSetup('${p.name}')">Login (GUI)</button>`; 
+                actionsUI += `<button class="btn-secondary" onclick="handleUploadSession('${p.name}')" title="Upload Session JSON" style="margin-left: 5px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; color: #fff;">Upload JSON</button>`;
+            }
+            else if (statusText === 'Captcha') { 
+                actionsUI += `<button class="btn-warning" onclick="handleResolve('${p.name}')">Solve Captcha</button>`; 
+                actionsUI += `<button class="btn-secondary" onclick="handleUploadSession('${p.name}')" title="Upload Session JSON" style="margin-left: 5px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; color: #fff;">Upload JSON</button>`;
+            }
+            else { 
+                actionsUI += `<button onclick="handleSetup('${p.name}')" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; color: #fff;">Re-Login</button>`; 
+                actionsUI += `<button class="btn-secondary" onclick="handleUploadSession('${p.name}')" title="Upload Session JSON" style="margin-left: 5px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; color: #fff;">Upload JSON</button>`;
+            }
+            if (p.session_valid) { actionsUI += `<button class="btn-danger" onclick="handleDeleteSession('${p.name}')" title="Delete Session" style="margin-left: 5px; padding: 6px; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; cursor: pointer; color: #ef4444;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>`; }
         }
 
         return `

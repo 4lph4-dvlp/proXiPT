@@ -174,12 +174,12 @@ class ProviderRouter:
             state.last_error = error
             log.warning("Provider %s error #%d: %s", provider.name, state.consecutive_errors, error)
 
-            # Circuit breaker: 3 consecutive errors → cooldown
+            # Circuit breaker: 3 consecutive errors - cooldown
             if state.consecutive_errors >= 3:
                 cooldown = state.config.cooldown_seconds * state.consecutive_errors
                 state.cooldown_until = time.time() + cooldown
                 state.is_healthy = False
-                log.error("Provider %s circuit opened — cooldown %ds", provider.name, cooldown)
+                log.error("Provider %s circuit opened - cooldown %ds", provider.name, cooldown)
 
     async def on_rate_limit(self, provider: BaseProvider) -> None:
         """Called when rate-limit is detected on the web page."""
@@ -189,15 +189,15 @@ class ProviderRouter:
             cooldown = max(60, state.config.cooldown_seconds * 10)
             state.cooldown_until = time.time() + cooldown
             state.last_error = "rate_limit_detected"
-            log.warning("Rate limit detected for %s — cooldown %ds", provider.name, cooldown)
+            log.warning("Rate limit detected for %s - cooldown %ds", provider.name, cooldown)
 
     async def on_captcha(self, provider: BaseProvider) -> None:
-        """Called when CAPTCHA is detected — disable until manual resolution."""
+        """Called when CAPTCHA is detected - disable until manual resolution."""
         async with self._lock:
             state = self._states[provider.name]
             state.is_healthy = False
             state.last_error = "captcha_required"
-            log.error("CAPTCHA detected for %s — provider disabled until resolved", provider.name)
+            log.error("CAPTCHA detected for %s - provider disabled until resolved", provider.name)
 
     def mark_healthy(self, provider_name: str) -> None:
         """Manually re-enable a provider (after login / CAPTCHA fix)."""

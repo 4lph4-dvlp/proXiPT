@@ -145,6 +145,33 @@ async def delete_session(provider_name: str):
         return {"status": "deleted", "provider": provider_name}
     raise HTTPException(status_code=404, detail="Session not found")
 
+@admin_router.post("/sessions/upload/{provider_name}")
+async def upload_session(provider_name: str, file: UploadFile = File(...)):
+    """Upload a session JSON file from the dashboard."""
+    from pathlib import Path
+    cfg = get_config()
+    session_dir = Path(cfg.browser.sessions_dir)
+    session_dir.mkdir(parents=True, exist_ok=True)
+    session_path = session_dir / f"{provider_name}_session.json"
+    
+    content = await file.read()
+    try:
+        import json
+        json.loads(content)  # Validate it's proper JSON
+        session_path.write_bytes(content)
+        
+        # Clear existing context if any so it reloads the new session on next request
+        old_ctx = pool._contexts.pop(provider_name, None)
+        if old_ctx:
+            asyncio.create_task(old_ctx.close())
+            
+        provider_router.mark_healthy(provider_name)
+        log.info("Session file uploaded and applied for %s", provider_name)
+        return {"status": "uploaded", "provider": provider_name}
+    except Exception as e:
+        log.error("Failed to parse uploaded session for %s: %s", provider_name, e)
+        raise HTTPException(status_code=400, detail=f"Invalid session file: {e}")
+
 @admin_router.post("/provider/{provider_name}/toggle")
 async def toggle_provider(provider_name: str):
     """Toggle a provider's enabled state in config.yaml and router runtime."""

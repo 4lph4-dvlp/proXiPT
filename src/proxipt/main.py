@@ -89,13 +89,58 @@ def _build_provider_map():
 # Lifespan
 # ---------------------------------------------------------------------------
 
+async def _sync_models_background():
+    """Background task to periodically scrape and update available models."""
+    from proxipt.core.browser_pool import pool
+    from proxipt.config import ModelEntry
+    while True:
+        log.info("Starting background model synchronization...")
+        for state in provider_router.all_states:
+            if not state.config.enabled:
+                continue
+            
+            provider = state.provider
+            try:
+                page = await pool.acquire_page(provider)
+                await provider.ensure_ready(page)
+                
+                fetched_models = await provider.fetch_available_models(page)
+                if fetched_models:
+                    log.info("Fetched dynamic models for %s: %s", provider.name, fetched_models)
+                    # Update state config
+                    existing_default = next((m for m in state.config.models if m.is_default), None)
+                    default_id = existing_default.id if existing_default else fetched_models[0]
+                    
+                    new_entries = []
+                    for m_id in fetched_models:
+                        new_entries.append(
+                            ModelEntry(
+                                id=m_id,
+                                name=m_id.replace("-", " ").title(),
+                                is_default=(m_id == default_id)
+                            )
+                        )
+                    # Merge with existing manually configured models
+                    existing_ids = {m.id for m in state.config.models}
+                    for m in new_entries:
+                        if m.id not in existing_ids:
+                            state.config.models.append(m)
+            except Exception as e:
+                log.warning("Failed to sync models for %s: %s", provider.name, e)
+            finally:
+                if 'page' in locals():
+                    await pool.release_page(provider, page)
+        
+        # Sleep for 12 hours before next sync
+        await asyncio.sleep(43200)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start browser pool and register providers on startup; cleanup on shutdown."""
     setup_logging()
     cfg = load_config()
     log.info("=" * 60)
-    log.info("  ProxiPT — Free LLM Chat → OpenAI API")
+    log.info("  ProxiPT - Free LLM Chat -> OpenAI API")
     log.info("=" * 60)
     log.info("Server: http://%s:%d", cfg.server.host, cfg.server.port)
 
@@ -107,7 +152,7 @@ async def lifespan(app: FastAPI):
     for pname, pcfg in cfg.providers.items():
         cls = provider_map.get(pname)
         if cls is None:
-            log.warning("No implementation for provider '%s' — skipping", pname)
+            log.warning("No implementation for provider '%s' - skipping", pname)
             continue
         provider_instance = cls()
         provider_router.register(provider_instance, pcfg)
@@ -127,14 +172,18 @@ async def lifespan(app: FastAPI):
             )
             provider_router.register(custom_provider, pcfg)
 
-    enabled = [s.name for s in provider_router.all_states]
+    enabled = [s.name for s in provider_router.all_states if s.config.enabled]
     log.info("Active providers: %s", ", ".join(enabled) or "(none)")
     log.info("Virtual models:   %s", ", ".join(cfg.routing.keys()) or "(none)")
     log.info("=" * 60)
 
+    # Start background model syncer
+    sync_task = asyncio.create_task(_sync_models_background())
+
     yield  # --- app is running ---
 
-    log.info("Shutting down…")
+    log.info("Shutting down...")
+    sync_task.cancel()
     await pool.stop()
 
 

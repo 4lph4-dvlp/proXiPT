@@ -38,7 +38,7 @@ providers:
       name: "DeepThink (R1)"
 
   qwen:
-    enabled: false
+    enabled: true
     base_url: "https://chat.qwen.ai"
     requires_login: false
     max_concurrent: 2
@@ -107,7 +107,7 @@ providers:
       name: "Mixtral 8x7B"
 
   huggingchat:
-    enabled: false
+    enabled: true
     base_url: "https://huggingface.co/chat"
     requires_login: false
     max_concurrent: 2
@@ -129,7 +129,7 @@ providers:
       is_default: true
 
   duckai:
-    enabled: false
+    enabled: true
     base_url: "https://duck.ai"
     requires_login: false
     max_concurrent: 2

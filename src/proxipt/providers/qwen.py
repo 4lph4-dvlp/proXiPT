@@ -33,9 +33,18 @@ class QwenProvider(BaseProvider):
             await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
             await asyncio.sleep(2)
 
+        # Qwen may show an introductory "Guidance" dialog
+        try:
+            guidance = page.locator('button:has-text("시작할 준비 되셨나요?"), button:has-text("Ready to start?"), button:has-text("시작하기"), button:has-text("Start")')
+            if await guidance.count() > 0:
+                await guidance.first.click()
+                await asyncio.sleep(0.5)
+        except Exception:
+            pass
+
         try:
             await page.wait_for_selector(
-                "textarea, div[contenteditable='true']",
+                self.SEL_TEXTAREA,
                 timeout=15_000,
             )
         except Exception:
@@ -52,6 +61,7 @@ class QwenProvider(BaseProvider):
             pass
         await page.goto(self.base_url, wait_until="domcontentloaded", timeout=30_000)
         await asyncio.sleep(2)
+        await self.ensure_ready(page)
 
     async def select_model(self, page: Page, model_name: str) -> None:
         try:
@@ -68,14 +78,14 @@ class QwenProvider(BaseProvider):
             log.debug("Model selection skipped: %s", e)
 
     async def send_message(self, page: Page, prompt: str) -> str:
-        await self.create_new_chat(page)
+        await self.ensure_ready(page)
         await self._inject_prompt(page, prompt)
         return await self._wait_for_response(
             page, self.SEL_RESPONSE, timeout=120_000, stability_checks=4,
         )
 
     async def send_message_streaming(self, page: Page, prompt: str) -> AsyncGenerator[str, None]:
-        await self.create_new_chat(page)
+        await self.ensure_ready(page)
         await self._inject_prompt(page, prompt)
         async for chunk in self._stream_response(
             page, self.SEL_RESPONSE, timeout=120_000, stability_checks=5,
@@ -97,14 +107,13 @@ class QwenProvider(BaseProvider):
 
     async def _inject_prompt(self, page: Page, prompt: str) -> None:
         await asyncio.sleep(0.5)
-        textarea = page.locator("textarea").first
+        textarea = page.locator(self.SEL_TEXTAREA).first
         try:
             await textarea.wait_for(timeout=10_000)
+            await textarea.click()
         except Exception:
-            textarea = page.locator("div[contenteditable='true']").first
-            await textarea.wait_for(timeout=5_000)
+            pass
 
-        await textarea.click()
         await asyncio.sleep(0.3)
         await textarea.fill(prompt)
         await asyncio.sleep(0.3)

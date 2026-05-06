@@ -73,6 +73,23 @@ async def _complete_response(provider, prompt, system_prompt, requested_model, m
     try:
         await provider_router.on_request_start(provider)
 
+        await provider.ensure_ready(page)
+        
+        # Check for provider errors (auth, captcha, rate limits)
+        err = await provider.detect_error(page)
+        if err == "rate_limit":
+            await provider_router.on_rate_limit(provider)
+            raise HTTPException(status_code=429, detail=f"Rate limit exceeded for {provider.name}")
+        elif err == "captcha":
+            await provider_router.on_captcha(provider)
+            raise HTTPException(status_code=403, detail=f"CAPTCHA detected for {provider.name}")
+        elif err == "auth_expired":
+            await provider_router.on_request_error(provider, "auth_expired")
+            raise HTTPException(status_code=401, detail=f"Authentication expired for {provider.name}")
+
+        if hasattr(provider, "select_model") and model_id != "default":
+            await provider.select_model(page, model_id)
+
         # Send and get response — provider handles navigation internally
         response_text = await provider.send_message(page, prompt)
 
@@ -107,6 +124,23 @@ async def _stream_response(provider, prompt, system_prompt, requested_model, mod
 
     try:
         await provider_router.on_request_start(provider)
+
+        await provider.ensure_ready(page)
+
+        # Check for provider errors (auth, captcha, rate limits)
+        err = await provider.detect_error(page)
+        if err == "rate_limit":
+            await provider_router.on_rate_limit(provider)
+            raise HTTPException(status_code=429, detail=f"Rate limit exceeded for {provider.name}")
+        elif err == "captcha":
+            await provider_router.on_captcha(provider)
+            raise HTTPException(status_code=403, detail=f"CAPTCHA detected for {provider.name}")
+        elif err == "auth_expired":
+            await provider_router.on_request_error(provider, "auth_expired")
+            raise HTTPException(status_code=401, detail=f"Authentication expired for {provider.name}")
+
+        if hasattr(provider, "select_model") and model_id != "default":
+            await provider.select_model(page, model_id)
 
         # First chunk with role
         first_chunk = build_chunk("", requested_model, chunk_id, include_role=True)

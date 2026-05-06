@@ -37,9 +37,12 @@ class BrowserPool:
         self._all_pages: dict[str, list[Page]] = {}
         # provider_name -> BrowserContext
         self._contexts: dict[str, BrowserContext] = {}
+        # provider_name -> last used timestamp
+        self._last_used: dict[str, float] = {}
 
         self._lock = asyncio.Lock()
         self._started = False
+        self._cleanup_task: asyncio.Task | None = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -57,15 +60,19 @@ class BrowserPool:
         self._browser = await launcher.launch(
             headless=cfg.headless,
             slow_mo=cfg.slow_mo,
-            args=["--disable-blink-features=AutomationControlled"],
+            args=["--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--no-sandbox"],
             ignore_default_args=["--enable-automation"],
         )
         self._started = True
+        import time
+        self._cleanup_task = asyncio.create_task(self._idle_cleanup_loop())
         log.info("Browser started")
 
     async def stop(self) -> None:
         """Close everything."""
         log.info("Shutting down browser pool")
+        if self._cleanup_task:
+            self._cleanup_task.cancel()
         for name, pages in self._all_pages.items():
             for page in pages:
                 try:
@@ -89,6 +96,36 @@ class BrowserPool:
                 pass
         self._started = False
 
+    async def _idle_cleanup_loop(self) -> None:
+        """Periodically close idle contexts to save RAM (critical for GCP e2-micro)."""
+        import time
+        IDLE_TIMEOUT = 300  # 5 minutes
+        while True:
+            try:
+                await asyncio.sleep(60)
+                now = time.time()
+                async with self._lock:
+                    to_close = []
+                    for name, ctx in list(self._contexts.items()):
+                        # If there are no active pages and it's been idle for > 5 mins
+                        active_pages = len(self._all_pages.get(name, []))
+                        last_used = self._last_used.get(name, now)
+                        if active_pages == 0 and (now - last_used) > IDLE_TIMEOUT:
+                            to_close.append((name, ctx))
+                    
+                    for name, ctx in to_close:
+                        log.info("Closing idle context for %s to save RAM", name)
+                        await self.save_session(name)
+                        del self._contexts[name]
+                        if name in self._last_used:
+                            del self._last_used[name]
+                        # Run close synchronously in background to avoid blocking lock
+                        asyncio.create_task(ctx.close())
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                log.error("Error in idle cleanup loop: %s", e)
+
     # ------------------------------------------------------------------
     # Context & page management
     # ------------------------------------------------------------------
@@ -96,6 +133,9 @@ class BrowserPool:
     async def get_context(self, provider_name: str) -> BrowserContext:
         """Get or create a browser context for *provider_name*, restoring
         saved session state if available."""
+        import time
+        self._last_used[provider_name] = time.time()
+        
         if provider_name in self._contexts:
             return self._contexts[provider_name]
 
