@@ -19,9 +19,9 @@ With this tool, you can connect over two dozen distinct state-of-the-art LLMs se
 
 - **23+ Integrated Free LLMs**: Headless support for global and regional powerhouses like ChatGPT, Gemini, DeepSeek, and Qwen.
 - **Native OpenAI Compatibility**: Exposes a standard `/v1/chat/completions` server with streaming (SSE). Drop-in replacement for any tool expecting OpenAI.
-- **Glassmorphism UI Dashboard**: Manage, toggle, and test providers instantly via a beautiful Web UI without modifying configuration files.
-- **Auto-magic Reliability**: Automatic session storage and GUI toggle buttons to securely log in or bypass CAPTCHAs, switching seamlessly back to headless mode.
-- **Intelligent Load Router**: Utilize generic model queries like `auto` or `best-free` to let the server intelligently load-balance across available and healthy providers.
+- **Notion-Style Dashboard**: A clean, minimalist Web UI with a built-in Dark/Light mode toggle. Manage your providers and settings effortlessly.
+- **Persistent Sessions for Cloud**: Designed to run smoothly on constrained VPS (like GCP e2-micro). It auto-suspends idle browsers to save RAM and allows easy session JSON uploads to keep you logged in permanently without a GUI.
+- **Dynamic Model Sync**: Automatically fetches and updates the latest available models from providers in the background.
 
 ---
 
@@ -47,10 +47,10 @@ proXiPT/
 │   │   │   ├── admin.py          # Dashboard endpoints & Toggles
 │   │   │   ├── chat.py           # Standard OpenAI completions endpoint
 │   │   │   └── models.py
-│   │   ├── static/               # Admin Dashboard Web UI (HTML/CSS/JS)
+│   │   ├── static/               # Admin Dashboard Web UI (Notion-style)
 │   │   └── schemas.py
 │   ├── core/
-│   │   ├── browser_pool.py       # Playwright browser lifecycle manager
+│   │   ├── browser_pool.py       # Playwright memory-optimized pool manager
 │   │   ├── router.py             # Advanced auto-routing & tracking
 │   │   └── response_parser.py
 │   ├── providers/                # 23 Built-in LLM integration scripts
@@ -95,7 +95,7 @@ flowchart TD
     I --> J["Navigate to Chat UI / Wait for DOM"]
     J --> K["Inject message & Parse response chunks via SSE"]
     K --> L["Stream payload back to Client"]
-    L --> M([End Request])
+    L --> M([Idle > 5m? Context Killed to Save RAM])
 ```
 
 ---
@@ -110,10 +110,6 @@ No terminal wizardry required.
 
 The scripts will automatically scaffold a clean Python virtual environment, download necessary frameworks including Playwright browsers, spin up the server, and **immediately open the Web Dashboard in your browser (`http://localhost:8787/dashboard`)**.
 
-<p align="center">
-  <img src="docs/dashboard_overview.png" width="800" alt="Dashboard Overview">
-</p>
-
 *For manual configuration:*
 ```bash
 python -m venv .venv
@@ -127,16 +123,21 @@ python -m proxipt.main
 
 Configure your models straight from the Web UI once the server boots.
 
-<p align="center">
-  <img src="docs/dashboard_settings.png" width="800" alt="Dashboard Settings">
-</p>
-
-1. **Toggle Providers**: Click the `Settings` icon in the navigation bar. Switch `ON` modules like Gemini, OpenRouter, or DeepSeek you wish to use.
-2. **Session Interception**:
+1. **Toggle Providers**: Click the `Settings` tab in the navigation bar. Switch `ON` modules like Gemini, OpenRouter, or DeepSeek you wish to use.
+2. **Session Interception (Local Setup)**:
    - Go back to the `Overview` tab. If a provider says `Needs Login`, click its **"Login (GUI)"** button.
    - A visible Chrome window will spawn. Proceed to log in manually.
    - Once logged in and redirected to the chat UI, switch back to the Dashboard and push **"Close GUI & Save"**.
    - Your session is now saved indefinitely and operation yields back seamlessly to unseen, headless operations!
+
+### 3. Deploying to a Cloud VPS (e.g., GCP e2-micro)
+
+Cloud servers lack graphical interfaces. To use proXiPT seamlessly 24/7 on a remote headless server:
+1. Run proXiPT once on your **Local PC** and use the **Login (GUI)** button to sign in as described above.
+2. This creates a `session.json` file in your local `sessions/` folder (e.g., `chatgpt_session.json`).
+3. Deploy and start proXiPT on your Cloud server.
+4. Open the Cloud server's dashboard, click the **Upload JSON** button for the respective provider, and select your local session file.
+5. proXiPT will automatically keep the session alive indefinitely from that point forward!
 
 ### 3. API Invocation & Tool Integrations
 
