@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 
 from proxipt.api.schemas import ProviderStatus, SystemStatus
 from proxipt.config import get_config
