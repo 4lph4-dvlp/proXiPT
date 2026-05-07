@@ -86,6 +86,8 @@ function showToast(title, message, isError = false) {
 elTabs.forEach(tab => {
     tab.addEventListener('click', () => {
         const target = tab.dataset.tab;
+        if (!target) return;
+        
         elTabs.forEach(t => t.classList.remove('active'));
         elPanes.forEach(p => p.classList.remove('active'));
         

@@ -37,6 +37,10 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
                     Integrations
                 </button>
+                <button class="nav-item" data-tab="guide">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Guide
+                </button>
             </nav>
 
             <div class="theme-toggle-container">
@@ -245,7 +249,88 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
+                <!-- GUIDE TAB -->
+                <div id="tab-guide" class="tab-pane">
+                    <div class="integrations-content">
+                        <h3>Session Extraction Guide</h3>
+                        <p style="color:var(--text-muted); margin-bottom: 2rem;">클라우드 환경(GCP 등)에서 세션 유지를 위해 필요한 <code>session.json</code> 파일을 획득하는 방법입니다.</p>
+
+                        <div class="instruction-block">
+                            <h4>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                방법 1: 로컬 proXiPT 사용 (권장)
+                            </h4>
+                            <p>가장 정확하고 오류가 없는 방법입니다. Playwright가 요구하는 모든 데이터(Cookies + LocalStorage)를 자동으로 캡처합니다.</p>
+                            <ol>
+                                <li>사용 중인 <b>로컬 PC</b>에서 proXiPT를 실행합니다.</li>
+                                <li>대시보드(Overview)에서 원하는 프로바이더의 <strong>Login (GUI)</strong> 버튼을 눌러 로그인합니다.</li>
+                                <li>로그인이 완료되면 GUI를 닫습니다.</li>
+                                <li>proXiPT 설치 폴더의 <code>sessions/</code> 디렉토리에 <code>[provider]_session.json</code> 파일이 생성됩니다.</li>
+                                <li>이 파일을 클라우드 대시보드에서 <strong>Upload JSON</strong> 버튼을 통해 업로드합니다.</li>
+                            </ol>
+                        </div>
+
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>방법 2: 브라우저 확장 프로그램 사용 (수동)</h4>
+                            </div>
+                            <div class="integration-body">
+                                proXiPT를 로컬에서 실행하기 번거로운 경우, 브라우저에서 직접 쿠키를 JSON으로 내보낼 수 있습니다.
+                                <br><br>
+                                <strong>1. 확장 프로그램 설치:</strong>
+                                <ul>
+                                    <li><b>Chrome / Edge / Brave:</b> <a href="https://chrome.google.com/webstore/detail/cookie-editor/hlkenmoglehhdjbcakaomihamccjbioc" target="_blank" style="color:var(--accent);">Cookie-Editor</a> 추천</li>
+                                    <li><b>Firefox:</b> <a href="https://addons.mozilla.org/en-US/firefox/addon/cookie-editor/" target="_blank" style="color:var(--accent);">Cookie-Editor</a> 추천</li>
+                                </ul>
+                                <br>
+                                <strong>2. 세션 데이터 추출:</strong>
+                                <ol style="margin-top:10px;">
+                                    <li>해당 프로바이더 사이트(예: chatgpt.com)에 접속하여 로그인합니다.</li>
+                                    <li>확장 프로그램을 실행하고 <strong>Export -> JSON</strong>을 클릭하여 클립보드에 복사합니다.</li>
+                                    <li>텍스트 편집기를 열어 아래 형식을 만들고, <code>[복사한 내용]</code> 부분에 붙여넣습니다:
+                                        <div class="code-block">
+{
+  "cookies": [복사한 내용],
+  "origins": []
+}
+                                        </div>
+                                    </li>
+                                    <li>파일을 <code>session.json</code>으로 저장한 뒤 대시보드에 업로드합니다.</li>
+                                </ol>
+                                <p style="font-size:0.85rem; color:var(--warning);">* 주의: 일부 프로바이더는 LocalStorage(origins) 데이터가 없으면 정상 작동하지 않을 수 있습니다.</p>
+                            </div>
+                        </div>
+
+                        <div class="integration-card" style="margin-top:1.5rem;">
+                            <div class="integration-header">
+                                <h4>방법 3: 개발자 도구 활용 (브라우저별 위치)</h4>
+                            </div>
+                            <div class="integration-body">
+                                별도의 설치 없이 브라우저 내장 도구를 사용하여 세션 값을 확인할 수 있습니다.
+                                <br><br>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <strong>Chrome / Brave / Edge</strong>
+                                        <ul style="font-size:0.85rem; margin-top:5px;">
+                                            <li>단축키: <code>F12</code> 또는 <code>Ctrl+Shift+I</code></li>
+                                            <li>탭: <strong>Application (애플리케이션)</strong></li>
+                                            <li>좌측 메뉴: <strong>Storage -> Cookies</strong></li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <strong>Firefox</strong>
+                                        <ul style="font-size:0.85rem; margin-top:5px;">
+                                            <li>단축키: <code>F12</code> 또는 <code>Ctrl+Shift+I</code></li>
+                                            <li>탭: <strong>Storage (저장소)</strong></li>
+                                            <li>좌측 메뉴: <strong>Cookies (쿠키)</strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
